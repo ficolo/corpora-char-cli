@@ -1,0 +1,6 @@
+requests==2.8.1
+textract==1.4.0
+joblib==0.9.3
+click==5.1
+dill==0.2.4
+PyMySQL==0.6.7
