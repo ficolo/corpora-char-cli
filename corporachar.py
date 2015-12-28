@@ -1,7 +1,7 @@
-#-*- coding: utf-8 -*-
 import click
 import time
 from corporachar.tasks import bioportal_annotator as annotator
+from corporachar.tasks import text_mining as minner
 
 
 WELCOME_MSJ = "Corpora Char v0.0: Command line interface to characterize document copora."
@@ -18,6 +18,7 @@ def cli(input, output):
     annotator.init()
     annotator.get_recommendations_dir(input)
     annotator.annotate_dir(input)
+    #minner.word_count_dir(input, ['DNA'])
     elapsed_time = time.time() - start_time
     click.secho("Elapsed time {}.".format(elapsed_time), fg='green')
     
