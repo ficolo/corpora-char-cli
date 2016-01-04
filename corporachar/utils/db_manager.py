@@ -10,7 +10,7 @@ CREATE_PROCESS_LOG = """
     """
 CREATE_ANNOTATIONS_STMT = """
     CREATE TABLE IF NOT EXISTS Annotations(id_annotation MEDIUMINT NOT NULL AUTO_INCREMENT, file_name TEXT,
-    bio_class_id TEXT, bio_ontology_id TEXT, text TEXT, match_type TEXT, context TEXT, frequency INT, PRIMARY KEY (id_annotation))
+    bio_class_id TEXT, bio_ontology_id TEXT, text TEXT, match_type TEXT, context TEXT, PRIMARY KEY (id_annotation))
     """
 CREATE_ONTOLOGIES_STMT = """
     CREATE TABLE IF NOT EXISTS Ontologies(id_ontology MEDIUMINT NOT NULL AUTO_INCREMENT, bio_ontology_id TEXT,
@@ -21,13 +21,13 @@ CREATE_WORDS_STMT = """
     frequency INT, PRIMARY KEY (id_word))
 """
 INSERT_LOG = """
-    INSERT INTO Process_Log(file_name, error, exception, data) VALUES ('{}', '{}', '{}', "{}")
+    INSERT INTO Process_Log(file_name, error, exception, data) VALUES ('{}', '{}', "{}", "{}")
     """
 INSERT_ONTOLOGY = """
     INSERT INTO Ontologies(bio_ontology_id, bio_ontology_acronym, frequency) VALUES ('{}','{}', {})
     """
 INSERT_ANNOTATION = """
-    INSERT INTO Annotations(file_name, bio_class_id, bio_ontology_id, text, match_type, frequency)
+    INSERT INTO Annotations(file_name, bio_class_id, bio_ontology_id, text, match_type, context)
     VALUES ('{}', '{}', '{}', "{}", "{}", '{}')
     """
 INSERT_WORD = """
@@ -94,15 +94,14 @@ class DBConnect:
     def insert_annotations(self, annotations):
         try:
             cur = self.con.cursor()
-            for class_id in annotations:
+            for annotation in annotations:
                 insert = INSERT_ANNOTATION.format(
-                    annotations[class_id]['file_name'],
-                    annotations[class_id]['bio_class_id'].replace("'", '%27'),
-                    annotations[class_id]['bio_ontology_id'],
-                    self.con.escape_string(annotations[class_id]['text'].replace("'", '`')),
-                    annotations[class_id]['match_type'],
-                    annotations[class_id]['context'],
-                    annotations[class_id]['frequency'])
+                    annotation['file_name'],
+                    annotation['bio_class_id'].replace("'", '%27'),
+                    annotation['bio_ontology_id'],
+                    self.con.escape_string(annotation['text'].replace("'", '`')),
+                    annotation['match_type'],
+                    self.con.escape_string(annotation['context'].replace("'", '`')))
                 cur.execute(insert)
             self.con.commit()
         except (pymysql.Error, UnicodeEncodeError) as e:
@@ -120,6 +119,7 @@ class DBConnect:
         except (pymysql.Error, UnicodeEncodeError) as e:
             print "Error %s:" % e.args[0]
             print e
+            print insert
             sys.exit(1)
 
     def insert_word(self, word):
@@ -129,6 +129,22 @@ class DBConnect:
             cur.execute(insert)
             self.con.commit()
         except (pymysql.Error, UnicodeEncodeError) as e:
+            print "Error %s:" % e.args[0]
+            print e
+            print insert
+            sys.exit(1)
+
+    def select_tags(self):
+        try:
+            cur = self.con.cursor()
+            select = "SELECT DISTINCT text FROM Annotations"
+            cur.execute(select)
+            rows = cur.fetchall()
+            tags =[]
+            for row in rows:
+                tags.append(row['text'])
+            return tags
+        except pymysql.Error, e:
             print "Error %s:" % e.args[0]
             print e
             sys.exit(1)
