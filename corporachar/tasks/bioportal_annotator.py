@@ -9,6 +9,7 @@ import textract
 from joblib import Parallel, delayed
 import click
 from unidecode import unidecode
+import itertools
 
 
 def init():
@@ -106,6 +107,7 @@ def annotate_doc(pdf_file_path, ontologies):
                 }
                 annotations.append(record)
         db.insert_annotations(annotations)
+        return
     except (ValueError, IndexError, KeyError) as e:
         print e
         log = {
@@ -120,7 +122,7 @@ def annotate_doc(pdf_file_path, ontologies):
 
 def annotate_dir(dir_path, ontologies):
     file_names = []
-
+    db = DBConnect()
     for root, dirs, files in walk(dir_path):
         for name in files:
             if 'pdf' in name or 'htm' in name or 'txt' in name:
@@ -148,7 +150,7 @@ def get_recommendations_dir(dir_path):
                 continue
 
     click.secho("Getting Bioportal recommendations for {} PDF documents.".format(len(file_names)), fg='blue')
-    n_jobs = 10
+    n_jobs = 20
     file_recommendations = Parallel(n_jobs=n_jobs)(delayed(get_recommendations_file)(file_name)
                                                         for file_name in file_names)
     for recommendation in file_recommendations:
